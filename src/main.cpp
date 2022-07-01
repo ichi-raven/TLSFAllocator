@@ -70,7 +70,7 @@ void checkAllCleared(void* mainMemory)
 
 int main()
 {
-    constexpr size_t maxSize          = 4096;
+    constexpr size_t maxSize          = 8192;
     constexpr size_t surplusBlockSize = sizeof(TLSFBlockHeader) + sizeof(uint32_t);
     std::byte* mainmemory             = new std::byte[maxSize];
     {
@@ -84,13 +84,9 @@ int main()
             allocTest<uint32_t>(allocator, data, maxSize - surplusBlockSize * testTime, testTime);
             freeTest<uint32_t>(allocator, data);
             std::cerr << "end free\n";
-            // checkAllCleared(mainmemory);
             allocator.clearAll();
-            allocator.checkMemTable();
-            // data.clear();
+            //allocator.checkMemTable();
         }
-
-        // allocator.clearAll();
 
         // 40
         auto* p  = allocator.alloc<uint32_t>(10);
@@ -104,8 +100,6 @@ int main()
         assert(p4[r] == 0xdeadbeef);
         std::cerr << "list free test clear\n";
 
-        // allocator.free(p4);
-
         auto* p5 = allocator.alloc<uint32_t>(10);
 
         for (size_t i = 0; i < 10; ++i)
@@ -116,16 +110,12 @@ int main()
             assert(p5[i] == i);
         }
 
-        // allocator.clearAll();
-
         std::cerr << "end test\n";
-    }  // allocatorを殺す
-
-    std::cerr << "killed allocator\n";
+    }
 
     delete[] mainmemory;
 
-    std::cerr << "killed main memory\n";
+    std::cerr << "clear main memory\n";
 
     std::cerr << "end all\n";
     return 0;
