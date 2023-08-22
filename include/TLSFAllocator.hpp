@@ -1,7 +1,10 @@
 template<uint32_t kSplitNum = 4>
 class TLSFAllocator;
 
-#pragma once
+
+#ifndef _HEADER_ONLY_TLSFALLOCATOR_HPP_
+#define _HEADER_ONLY_TLSFALLOCATOR_HPP_
+
 #include <cstddef>
 #include <cstdint>
 #include <cassert>
@@ -549,3 +552,5 @@ private:
     const uint32_t mBlockArraySize;
     uint32_t mAllFLI;
 };
+
+#endif
