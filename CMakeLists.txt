@@ -1,10 +1,9 @@
 
 cmake_minimum_required(VERSION 3.11)
 
+set(CMAKE_CXX_STANDARD 17)
 
-project(FreeC++Writing)
-
-add_definitions("-w -g -O0 -std=c++17")
+project(TLSFAllocator)
 
 INCLUDE_DIRECTORIES(
    "${PROJECT_SOURCE_DIR}/include"

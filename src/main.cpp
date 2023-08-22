@@ -19,28 +19,28 @@ struct TestArray
 };
 
 template <typename T>
-void allocTest(TLSFAllocator& allocator, std::vector<TestArray<T>>& data, size_t maxSize, uint32_t testTime)
+void allocTest(TLSFAllocator<>& allocator, std::vector<TestArray<T>>& data, uint32_t maxSize, uint32_t testTime)
 {
-    size_t onceMax = maxSize / sizeof(T) / testTime;
+    uint32_t onceMax = maxSize / sizeof(T) / testTime;
     assert(onceMax * testTime < maxSize);
     uint32_t sizeSum = 0;
     std::random_device seed_gen;
     std::mt19937 engine(seed_gen());
-    std::uniform_int_distribution<> dist(onceMax / 3 * 2, onceMax - 1);
+    std::uniform_int_distribution<> dist(onceMax / 3, onceMax - 1);
 
     for (size_t i = 0; i < testTime; ++i)
     {
         TestArray<T> a;
-        size_t s = dist(engine);
+        uint32_t s = dist(engine);
         sizeSum += s * sizeof(T);
         std::cerr << "allocated size : " << s * sizeof(T) << "\n";
         std::cerr << "all size : " << sizeSum << "\n";
-        a.memory = allocator.alloc<T>(s);
+        a.memory = allocator.allocate<T>(s);
         a.size   = s;
         assert(a.memory);
-        for (size_t j = 0; j < s; ++j)  // write read test
+        for (uint32_t j = 0; j < s; ++j)  // write read test
         {
-            auto test = dist(engine);
+            auto test = j;
             a[j]      = test;
             assert(a[j] == test);
         }
@@ -49,12 +49,18 @@ void allocTest(TLSFAllocator& allocator, std::vector<TestArray<T>>& data, size_t
 }
 
 template <typename T>
-void freeTest(TLSFAllocator& allocator, std::vector<TestArray<T>>& data)
+void freeTest(TLSFAllocator<>& allocator, std::vector<TestArray<T>>& data)
 {
     size_t sum = 0;
     for (auto& d : data)
     {
-        allocator.free(d.memory);
+        // value check
+        for (int i = 0; i < d.size; ++i)
+        {
+            assert(d[i] == i);
+        }
+
+        allocator.deallocate(d.memory);
         std::cerr << "free size : " << d.size * sizeof(T) << "\n";
         sum += d.size * sizeof(T);
     }
@@ -77,34 +83,34 @@ int main()
         TLSFAllocator allocator(mainmemory, maxSize);
 
         std::vector<TestArray<uint32_t>> data;
-        uint32_t testTime = 10;
-        for (size_t time = 0; time < 100; ++time)
+        uint32_t testTime = 40;
+        for (size_t time = 0; time < 10000; ++time)
         {
             std::cerr << "test time : " << time << "\n";
             allocTest<uint32_t>(allocator, data, maxSize - surplusBlockSize * testTime, testTime);
             freeTest<uint32_t>(allocator, data);
             std::cerr << "end free\n";
             allocator.clearAll();
-            //allocator.checkMemTable();
+            //allocator.dump();
         }
 
         // 40
-        auto* p  = allocator.alloc<uint32_t>(10);
-        auto* p2 = allocator.alloc<uint32_t>(10);
-        auto* p3 = allocator.alloc<uint32_t>(10);
-        allocator.free(p2);
-        auto* p4 = allocator.alloc<uint32_t>(10);
+        auto* p  = allocator.allocate<uint32_t>(10);
+        auto* p2 = allocator.allocate<uint32_t>(10);
+        auto* p3 = allocator.allocate<uint32_t>(10);
+        allocator.deallocate(p2);
+        auto* p4 = allocator.allocate<uint32_t>(10);
 
         const auto r = rand() % 10;
         p2[r]        = 0xdeadbeef;
         assert(p4[r] == 0xdeadbeef);
         std::cerr << "list free test clear\n";
 
-        auto* p5 = allocator.alloc<uint32_t>(10);
+        auto* p5 = allocator.allocate<uint32_t>(10);
 
         for (size_t i = 0; i < 10; ++i)
         {
-            p[i] = p3[i] = p5[i] = i;
+            p[i] = p3[i] = p5[i] = static_cast<uint32_t>(i);
             assert(p[i] == i);
             assert(p3[i] == i);
             assert(p5[i] == i);
