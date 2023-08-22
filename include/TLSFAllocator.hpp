@@ -1,3 +1,6 @@
+template<uint32_t kSplitNum = 4>
+class TLSFAllocator;
+
 #pragma once
 #include <cstddef>
 #include <cstdint>
